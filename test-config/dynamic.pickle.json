@@ -1,4 +1,10 @@
 {
+  "notified-version-updates": {
+    "__class__": "set",
+    "__value__": [
+      "9.11"
+    ]
+  },
   "sort_history": [
     [
       "timestamp",

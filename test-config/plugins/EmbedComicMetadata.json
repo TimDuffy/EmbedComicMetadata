@@ -37,6 +37,7 @@
   "read_both": true,
   "read_cbi": true,
   "read_cix": true,
+  "remove_metadata": true,
   "storyarc_column": "#story_arc",
   "swap_names": false,
   "teams_column": "#genre",

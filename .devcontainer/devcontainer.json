@@ -3,18 +3,13 @@
 {
 	"name": "Ubuntu",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:noble",
-
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	"features": {
-		"ghcr.io/devcontainers/features/python:1": {}
-	},
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo apt update && sudo apt upgrade -y && sudo apt install -y xdg-utils libopengl0 libxcb-cursor0 qt6-base-dev && sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin",
+	"postCreateCommand": "sudo apt update && sudo apt upgrade -y && sudo apt install -y xdg-utils python3 libopengl0 libxcb-cursor0 qt6-base-dev && sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin",
 
 	// Configure tool-specific properties.
 	"customizations": {
@@ -29,7 +24,7 @@
 					}
 				}
 			},
-			"extensions": []
+			"extensions": ["ms-python.python"]
 		}},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.

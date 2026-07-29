@@ -27,6 +27,7 @@
     "__class__": "bytearray",
     "__value__": "AAAA/wAAAAEAAAACAAABAAAAAEYA/////wEAAAABAA=="
   },
+  "bookshelf view visible": false,
   "cover_grid_background": {
     "dark": [
       45,
@@ -42,6 +43,22 @@
     "light_texture": null,
     "migrated": true
   },
+  "custcol-prefs-column_order": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "custcol-prefs-table-geometry": [
+    69,
+    143,
+    125,
+    395,
+    111,
+    100
+  ],
   "custom_colors_for_color_dialog": [
     [
       255,
@@ -142,10 +159,10 @@
   ],
   "geometry-of-calibre_main_window_geometry": {
     "frame_geometry": {
-      "height": 1032,
-      "width": 1920,
-      "x": -3,
-      "y": -30
+      "height": 999,
+      "width": 1914,
+      "x": 0,
+      "y": 0
     },
     "full_screened": false,
     "geometry": {
@@ -163,7 +180,7 @@
     },
     "qt": {
       "__class__": "bytearray",
-      "__value__": "AdnQywADAAD////9////4gAAB3wAAAPpAAAAAAAAAAAAAAd5AAAD5gAAAAACAAAAB4AAAAAAAAAAAAAAB3kAAAPm"
+      "__value__": "AdnQywADAAAAAAAAAAAAAAAAB3kAAAPmAAAAAAAAAAAAAAd5AAAD5gAAAAACAAAAB4AAAAAAAAAAAAAAB3kAAAPm"
     },
     "screen": {
       "depth": 32,
@@ -244,10 +261,10 @@
   },
   "geometry-of-plugin config dialog:User interface action:Embed Comic Metadata": {
     "frame_geometry": {
-      "height": 465,
-      "width": 766,
-      "x": -3,
-      "y": -30
+      "height": 432,
+      "width": 760,
+      "x": 0,
+      "y": 0
     },
     "full_screened": false,
     "geometry": {
@@ -265,7 +282,7 @@
     },
     "qt": {
       "__class__": "bytearray",
-      "__value__": "AdnQywADAAD////9////4gAAAvoAAAGyAAAAAAAAAAAAAAL3AAABrwAAAAAAAAAAB4AAAAAAAAAAAAAAAvcAAAGv"
+      "__value__": "AdnQywADAAAAAAAAAAAAAAAAAvcAAAGvAAAAAAAAAAAAAAL3AAABrwAAAAAAAAAAB4AAAAAAAAAAAAAAAvcAAAGv"
     },
     "screen": {
       "depth": 32,
@@ -297,26 +314,26 @@
     "frame_geometry": {
       "height": 753,
       "width": 936,
-      "x": 486,
-      "y": 79
+      "x": -3,
+      "y": -30
     },
     "full_screened": false,
     "geometry": {
       "height": 720,
       "width": 930,
-      "x": 489,
-      "y": 109
+      "x": 0,
+      "y": 0
     },
     "maximized": false,
     "normal_geometry": {
       "height": 720,
       "width": 930,
-      "x": 489,
-      "y": 109
+      "x": 0,
+      "y": 0
     },
     "qt": {
       "__class__": "bytearray",
-      "__value__": "AdnQywADAAAAAAHmAAAATwAABY0AAAM/AAAB6QAAAG0AAAWKAAADPAAAAAAAAAAAB4AAAAHpAAAAbQAABYoAAAM8"
+      "__value__": "AdnQywADAAD////9////4gAAA6QAAALSAAAAAAAAAAAAAAOhAAACzwAAAAAAAAAAB4AAAAAAAAAAAAAAA6EAAALP"
     },
     "screen": {
       "depth": 32,
@@ -346,7 +363,7 @@
   },
   "grid view visible": false,
   "library_usage_stats": {
-    "/root/Calibre Library": 12
+    "/root/Calibre Library": 24
   },
   "main_window_central_widget_state": {
     "layout": "wide",
