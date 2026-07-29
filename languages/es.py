@@ -24,6 +24,8 @@ es = {
     'Image size:': 'Tamaño Imagen:',
     'Comicvine link:': 'Comicvine enlace:',
     'Manga:': 'Manga:',
+    "Format:": "Formato:",
+    'Age Rating:': 'Clasificación por edades:',
     # options (ini.py)
     "Options:": "Opciones:",
     'Write metadata in zip comment': 'Escribir metadatos en comentario zip',

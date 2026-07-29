@@ -312,10 +312,10 @@
   },
   "geometry-of-preferences dialog geometry": {
     "frame_geometry": {
-      "height": 753,
-      "width": 936,
-      "x": -3,
-      "y": -30
+      "height": 720,
+      "width": 930,
+      "x": 0,
+      "y": 0
     },
     "full_screened": false,
     "geometry": {
@@ -333,7 +333,7 @@
     },
     "qt": {
       "__class__": "bytearray",
-      "__value__": "AdnQywADAAD////9////4gAAA6QAAALSAAAAAAAAAAAAAAOhAAACzwAAAAAAAAAAB4AAAAAAAAAAAAAAA6EAAALP"
+      "__value__": "AdnQywADAAAAAAAAAAAAAAAAA6EAAALPAAAAAAAAAAAAAAOhAAACzwAAAAAAAAAAB4AAAAAAAAAAAAAAA6EAAALP"
     },
     "screen": {
       "depth": 32,
@@ -363,7 +363,7 @@
   },
   "grid view visible": false,
   "library_usage_stats": {
-    "/root/Calibre Library": 24
+    "/root/Calibre Library": 30
   },
   "main_window_central_widget_state": {
     "layout": "wide",

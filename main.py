@@ -5,28 +5,31 @@ __license__   = 'GPL v3'
 __copyright__ = '2015, dloraine'
 __docformat__ = 'restructuredtext en'
 
-from functools import partial
 from calibre.gui2 import error_dialog, info_dialog
 
 from calibre_plugins.EmbedComicMetadata.config import prefs
 from calibre_plugins.EmbedComicMetadata.languages.lang import _L
-from calibre_plugins.EmbedComicMetadata.comicmetadata import ComicMetadata
+from calibre_plugins.EmbedComicMetadata.Comicbook import Comicbook
 
 import sys
 
 python3 = sys.version_info[0] > 2
 
 def import_to_calibre(ia, action):
-    def _import_to_calibre(metadata):
-        metadata.get_comic_metadata_from_file()
-        if action == "both" and metadata.comic_metadata:
-            metadata.import_comic_metadata_to_calibre(metadata.comic_metadata)
-        elif action == "cix" and metadata.cix_metadata:
-            metadata.import_comic_metadata_to_calibre(metadata.cix_metadata)
-        elif action == "cbi" and metadata.cbi_metadata:
-            metadata.import_comic_metadata_to_calibre(metadata.cbi_metadata)
-        else:
+    def _import_to_calibre(book):
+        if action == "both" or action == "cix":
+            book.cix_metadata.read()
+            book.calibre_metadata.overlay(book.cix_metadata)
+        if action == "both" or action == "cbi":
+            book.cbi_metadata.read()
+            book.calibre_metadata.overlay(book.cbi_metadata)
+        if book.cix_metadata.isEmpty and book.cbi_metadata.isEmpty:
             return False
+        if prefs['auto_count_pages']:
+            book.calibre_metadata.pageCount = book.count_pages()
+        if prefs['get_image_sizes']:
+            book.calibre_metadata.imageSize = book.get_picture_size()
+        book.calibre_metadata.write()
         return True
 
     iterate_over_books(ia, _import_to_calibre,
@@ -37,15 +40,17 @@ def import_to_calibre(ia, action):
 
 
 def embed_into_comic(ia, action):
-    def _embed_into_comic(metadata):
-        if metadata.format != "cbz":
+    def _embed_into_comic(book):
+        if not book.is_zippy:
             return False
-        metadata.overlay_metadata()
         if action == "both" or action == "cix":
-            metadata.embed_cix_metadata()
+            book.cix_metadata.read()
+            book.cix_metadata.overlay(book.calibre_metadata)
+            book.cix_metadata.write()
         if action == "both" or action == "cbi":
-            metadata.embed_cbi_metadata()
-        metadata.add_updated_comic_to_calibre()
+            book.cbi_metadata.read()
+            book.cbi_metadata.overlay(book.calibre_metadata)
+            book.cbi_metadata.write()
         return True
 
     iterate_over_books(ia, _embed_into_comic,
@@ -55,7 +60,9 @@ def embed_into_comic(ia, action):
 
 
 def convert(ia):
-    iterate_over_books(ia, partial(convert_to_cbz, ia),
+    def _convert_to_cbz(book):
+        return book.convert_to_cbz()
+    iterate_over_books(ia, _convert_to_cbz,
                        _L["Converted files"],
                        _L['Converted the following book(s) to cbz: {}'],
                        _L['{} books were not converted'],
@@ -63,11 +70,10 @@ def convert(ia):
 
 
 def embed_cover(ia):
-    def _embed_cover(metadata):
-        if metadata.format != "cbz":
+    def _embed_cover(book):
+        if not book.is_zippy:
             return False
-        metadata.update_cover()
-        metadata.add_updated_comic_to_calibre()
+        book.update_cover()
         return True
 
     iterate_over_books(ia, _embed_cover,
@@ -77,10 +83,12 @@ def embed_cover(ia):
 
 
 def count_pages(ia):
-    def _count_pages(metadata):
-        if metadata.format != "cbz":
+    def _count_pages(book):
+        if not book.is_zippy:
             return False
-        return metadata.action_count_pages()
+        book.calibre_metadata.pageCount = book.count_pages()
+        book.calibre_metadata.write()
+        return True
 
     iterate_over_books(ia, _count_pages,
                        _L["Counted pages"],
@@ -116,11 +124,11 @@ def clean_cbz(ia):
 
 
 def remove_metadata(ia):
-    def _remove_metadata(metadata):
-        if metadata.format != "cbz":
+    def _remove_metadata(book):
+        if not book.is_zippy:
             return False
-        metadata.remove_embedded_metadata()
-        metadata.add_updated_comic_to_calibre()
+        book.cix_metadata.remove()
+        book.cbi_metadata.remove()
         return True
 
     iterate_over_books(ia, _remove_metadata,
@@ -130,10 +138,12 @@ def remove_metadata(ia):
 
 
 def get_image_size(ia):
-    def _get_image_size(metadata):
-        if metadata.format != "cbz":
+    def _get_image_size(book):
+        if not book.is_zippy:
             return False
-        return metadata.action_picture_size()
+        book.calibre_metadata.imageSize = book.get_picture_size()
+        book.calibre_metadata.write()
+        return True
 
     iterate_over_books(ia, _get_image_size,
                        _L["Updated Calibre Metadata"],
@@ -158,28 +168,30 @@ def iterate_over_books(ia, func, title, ptext, notptext,
 
     # iterate through the books
     for book_id in get_selected_books(ia):
-        metadata = ComicMetadata(book_id, ia)
+        book = Comicbook(book_id, ia)
 
         # sanity check
-        if metadata.format is None:
-            not_processed.append(metadata.info)
+        if book.format is None:
+            not_processed.append(book.info)
             continue
 
-        if should_convert and convert_to_cbz(ia, metadata):
-            converted.append(metadata.info)
+        if should_convert and book.convert_to_cbz():
+            converted.append(book.info)
 
-        if func(metadata):
-            processed.append(metadata.info)
+        if func(book):
+            processed.append(book.info)
         else:
-            not_processed.append(metadata.info)
+            not_processed.append(book.info)
+
+        book.cleanup()
 
     if len(processed) != 0 or len(not_processed) != 0 or len(converted) != 0:
         # show a completion message
-        msg = ptext.format(lst2string(processed))
+        msg = ptext.format(len(processed))
         if should_convert and len(converted) > 0:
             msg += '\n' + convtext.format(lst2string(converted))
         if len(not_processed) > 0:
-            msg += '\n' + notptext.format(len(not_processed))
+            msg += '\n' + notptext.format(lst2string(not_processed))
         info_dialog(ia.gui, title, msg, show=True)
 
 
@@ -200,17 +212,3 @@ def lst2string(lst):
     if python3:
         return "\n    " + "\n    ".join(lst)
     return "\n    " + "\n    ".join(item.encode('utf-8') for item in lst)
-
-
-def convert_to_cbz(ia, metadata):
-    if metadata.format == "cbr" or (metadata.format == "rar" and prefs['convert_archives']):
-        metadata.convert_cbr_to_cbz()
-        if prefs['delete_cbr']:
-            ia.gui.current_db.new_api.remove_formats({metadata.book_id: {"cbr", "rar"}})
-        return True
-    elif metadata.format == "zip" and prefs['convert_archives']:
-        metadata.convert_zip_to_cbz()
-        if prefs['delete_cbr']:
-            ia.gui.current_db.new_api.remove_formats({metadata.book_id: {"zip"}})
-        return True
-    return False

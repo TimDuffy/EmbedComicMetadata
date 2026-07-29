@@ -24,6 +24,8 @@ en = {
     'Image size:': 'Image size:',
     'Comicvine link:': 'Comicvine link:',
     'Manga:': 'Manga:',
+    "Format:": "Format:",
+    'Age Rating:': 'Age Rating:',
     # options (ini.py)
     'Options:': 'Options:',
     'Write metadata in zip comment': 'Write metadata in zip comment',
@@ -39,8 +41,6 @@ en = {
     'If checked, overwrites the tags in calibre.': 'If checked, overwrites the tags in calibre.',
     'Auto count pages if importing': 'Auto count pages if importing',
     'Get the image size if importing': 'Get the image size if importing',
-    'Clean up directory struture inside CBZ files': 'Clean up directory struture inside CBZ files',
-    'Mark CBZ files with improper file struture': 'Mark CBZ files with improper file struture',
     # main_buton (ini.py)
     'Main Button Action (needs a calibre restart):': 'Main Button Action (needs a calibre restart):',
     'Embed metadata': 'Embed metadata',
