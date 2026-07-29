@@ -34,8 +34,8 @@ def import_to_calibre(ia, action):
 
     iterate_over_books(ia, _import_to_calibre,
                        _L["Updated Calibre Metadata"],
-                       _L['Updated calibre metadata for: {}'],
-                       _L['{} books had no metadata'],
+                       _L['Updated calibre metadata for {} book(s)'],
+                       _L['The following books had no metadata: {}'],
                        prefs['convert_reading'])
 
 
@@ -55,8 +55,8 @@ def embed_into_comic(ia, action):
 
     iterate_over_books(ia, _embed_into_comic,
                        _L["Updated comics"],
-                       _L['Updated metadata for the following comics: {}'],
-                       _L['{} books were not updated'])
+                       _L['Updated the metadata in the files of {} comics'],
+                       _L['The following books were not updated: {}'])
 
 
 def convert(ia):
@@ -64,8 +64,8 @@ def convert(ia):
         return book.convert_to_cbz()
     iterate_over_books(ia, _convert_to_cbz,
                        _L["Converted files"],
-                       _L['Converted the following book(s) to cbz: {}'],
-                       _L['{} books were not converted'],
+                       _L['Converted {} book(s) to cbz'],
+                       _L['The following books were not converted: {}'],
                        False)
 
 
@@ -78,8 +78,8 @@ def embed_cover(ia):
 
     iterate_over_books(ia, _embed_cover,
                        _L["Updated Covers"],
-                       _L['Embeded covers for the following books: {}'],
-                       _L['{} covers were not embeded'])
+                       _L['Embeded {} covers'],
+                       _L['The following covers were not embeded: {}'])
 
 
 def count_pages(ia):
@@ -92,8 +92,8 @@ def count_pages(ia):
 
     iterate_over_books(ia, _count_pages,
                        _L["Counted pages"],
-                       _L['Counted pages for the following comics: {}'],
-                       _L['{} comics were not counted'])
+                       _L['Counted pages in {} comics'],
+                       _L['The following comics were not counted: {}'])
 
 
 def mark_cbz(ia):
@@ -147,8 +147,8 @@ def get_image_size(ia):
 
     iterate_over_books(ia, _get_image_size,
                        _L["Updated Calibre Metadata"],
-                       _L['Updated calibre metadata for: {}'],
-                       _L['{} books were not updated'])
+                       _L['Updated calibre metadata for {} book(s)'],
+                       _L['The following books were not updated: {}'])
 
 
 def iterate_over_books(ia, func, title, ptext, notptext,
@@ -185,23 +185,21 @@ def iterate_over_books(ia, func, title, ptext, notptext,
 
         book.cleanup()
 
-    if len(processed) != 0 or len(not_processed) != 0 or len(converted) != 0:
-        # show a completion message
-        msg = ptext.format(len(processed))
-        if should_convert and len(converted) > 0:
-            msg += '\n' + convtext.format(lst2string(converted))
-        if len(not_processed) > 0:
-            msg += '\n' + notptext.format(lst2string(not_processed))
-        info_dialog(ia.gui, title, msg, show=True)
+    # show a completion message
+    msg = ptext.format(lst2string(processed))
+    if should_convert and len(converted) > 0:
+        msg += '\n' + convtext.format(lst2string(converted))
+    if len(not_processed) > 0:
+        msg += '\n' + notptext.format(len(not_processed))
+    info_dialog(ia.gui, title, msg, show=True)
 
 
 def get_selected_books(ia):
     # Get currently selected books
     rows = ia.gui.library_view.selectionModel().selectedRows()
     if not rows or len(rows) == 0:
-        error_dialog(ia.gui, _L['Cannot update metadata'],
+        return  error_dialog(ia.gui, _L['Cannot update metadata'],
                      _L['No books selected'], show=True)
-        return []
     # Map the rows to book ids
     return map(ia.gui.library_view.model().id, rows)
 

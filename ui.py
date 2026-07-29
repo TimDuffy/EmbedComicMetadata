@@ -92,23 +92,23 @@ class EmbedComicMetadata(InterfaceAction):
             clean_cbz(self)
             return
 
-        action_i = prefs["main_import"]
-        action_e = prefs["main_embed"]
+        i = prefs["main_import"]
+        e = prefs["main_embed"]
         # Check the preferences for what should be done
-        if (action_i and prefs['read_cbi'] and prefs['read_cix']) or (
-                action_e and prefs['cbi_embed'] and prefs['cix_embed']):
+        if (i and prefs['read_cbi'] and prefs['read_cix']) or (
+                e and prefs['cbi_embed'] and prefs['cix_embed']):
             action = "both"
-        elif (action_i and prefs['read_cbi']) or (action_e and prefs['cbi_embed']):
+        elif (i and prefs['read_cbi']) or (e and prefs['cbi_embed']):
             action = "cbi"
-        elif (action_i and prefs['read_cix']) or (action_e and prefs['cix_embed']):
+        elif (i and prefs['read_cix']) or (e and prefs['cix_embed']):
             action = "cix"
         else:
             return error_dialog(self.gui, _L['Cannot update metadata'],
                                 _L['No embed format selected'], show=True)
 
-        if action_i:
+        if i:
             import_to_calibre(self, action)
-        elif action_e:
+        elif e:
             embed_into_comic(self, action)
 
     def apply_settings(self):

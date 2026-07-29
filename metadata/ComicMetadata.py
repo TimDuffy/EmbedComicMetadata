@@ -123,7 +123,7 @@ class ComicMetadata(ABC):
     @abstractmethod
     def convert_from_native(self):
         pass
-
+    
     @abstractmethod
     def convert_to_native(self):
         pass
@@ -135,11 +135,11 @@ class ComicMetadata(ABC):
     @abstractmethod
     def write_to_source(self):
         pass
-
+    
     @abstractmethod
     def remove(self):
         pass
-
+    
     def read(self):
         self.read_from_source()
         if self.native is not None:
@@ -159,7 +159,7 @@ class ComicMetadata(ABC):
             return
         else:
             self.isEmpty = False
-
+          
         def assign(cur, new):
             if new is not None:
                 if type(new) == str and len(new) == 0:
