@@ -26,6 +26,9 @@ limitations under the License.
 from abc import ABC, abstractmethod
 from calibre_plugins.EmbedComicMetadata.utils import listToString
 
+import re
+import unicodedata
+
 
 # These page info classes are exactly the same as the CIX scheme, since it's unique
 class PageType:
@@ -123,7 +126,7 @@ class ComicMetadata(ABC):
     @abstractmethod
     def convert_from_native(self):
         pass
-    
+
     @abstractmethod
     def convert_to_native(self):
         pass
@@ -135,11 +138,11 @@ class ComicMetadata(ABC):
     @abstractmethod
     def write_to_source(self):
         pass
-    
+
     @abstractmethod
     def remove(self):
         pass
-    
+
     def read(self):
         self.read_from_source()
         if self.native is not None:
@@ -159,7 +162,7 @@ class ComicMetadata(ABC):
             return
         else:
             self.isEmpty = False
-          
+
         def assign(cur, new):
             if new is not None:
                 if type(new) == str and len(new) == 0:
@@ -371,3 +374,9 @@ class ComicMetadata(ABC):
             outstr += fmt_str.format(i[0] + ":", i[1])
 
         return outstr
+
+def strip_accents(input):
+    return ''.join(c for c in unicodedata.normalize('NFD', input) if unicodedata.category(c) != 'Mn')
+
+def clean_title(input):
+    return re.sub(r'[^\w_,\-\.\(\)\s]', '_', strip_accents(input))

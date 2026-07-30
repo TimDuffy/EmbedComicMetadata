@@ -96,6 +96,33 @@ def count_pages(ia):
                        _L['The following comics were not counted: {}'])
 
 
+def mark_cbz(ia):
+    def _mark_cbz(metadata):
+        if metadata.format not in ["cbr", "zip", "cbz"]:
+            return False
+        return metadata.action_mark_cbz()
+
+    iterate_over_books(ia, _mark_cbz,
+                       _L["Marked comics"],
+                       _L['Marked the following comics: {}'],
+                       _L['{} comics were not marked'],
+                       False)
+
+
+def clean_cbz(ia):
+    def _clean_cbz(metadata):
+        if metadata.format != "cbz":
+            return False
+        metadata.action_count_pages()
+        return metadata.clean_cbz()
+
+    iterate_over_books(ia, _clean_cbz,
+                       _L["Cleaned comics"],
+                       _L['Cleaned the following comics: {}'],
+                       _L['{} comics were not cleaned'])
+
+
+
 def remove_metadata(ia):
     def _remove_metadata(book):
         if not book.is_zippy:
@@ -155,15 +182,15 @@ def iterate_over_books(ia, func, title, ptext, notptext,
             processed.append(book.info)
         else:
             not_processed.append(book.info)
-        
+
         book.cleanup()
 
     # show a completion message
-    msg = ptext.format(len(processed))
+    msg = ptext.format(lst2string(processed))
     if should_convert and len(converted) > 0:
         msg += '\n' + convtext.format(lst2string(converted))
     if len(not_processed) > 0:
-        msg += '\n' + notptext.format(lst2string(not_processed))
+        msg += '\n' + notptext.format(len(not_processed))
     info_dialog(ia.gui, title, msg, show=True)
 
 
@@ -171,13 +198,15 @@ def get_selected_books(ia):
     # Get currently selected books
     rows = ia.gui.library_view.selectionModel().selectedRows()
     if not rows or len(rows) == 0:
-        return error_dialog(ia.gui, _L['Cannot update metadata'],
-                            _L['No books selected'], show=True)
+        return  error_dialog(ia.gui, _L['Cannot update metadata'],
+                     _L['No books selected'], show=True)
     # Map the rows to book ids
     return map(ia.gui.library_view.model().id, rows)
 
 
 def lst2string(lst):
+    if len(lst) == 0:
+        return "\n    " + "[None]\n    "
     if python3:
         return "\n    " + "\n    ".join(lst)
     return "\n    " + "\n    ".join(item.encode('utf-8') for item in lst)

@@ -47,6 +47,7 @@ class ComicbookinfoMetadata(ComicMetadata):
         self.month = xlate('publicationMonth')
         self.year = xlate('publicationYear')
         self.issueCount = xlate('numberOfIssues')
+        self.pageCount = xlate('pageCount')
         self.comments = xlate('comments')
         self.credits = xlate('credits')
         self.genre = xlate('genre')
@@ -93,6 +94,7 @@ class ComicbookinfoMetadata(ComicMetadata):
         assign('publicationMonth', toInt(self.month))
         assign('publicationYear', toInt(self.year))
         assign('numberOfIssues', toInt(self.issueCount))
+        assign('pageCount', toInt(self.pageCount))
         assign('comments', self.comments)
         assign('genre', self.genre)
         assign('volume', toInt(self.volume))
@@ -127,10 +129,10 @@ class ComicbookinfoMetadata(ComicMetadata):
     def read_from_cbz(self):
         with ZipFile(self.book.file) as zf:
             return zf.comment
-    
+
     def read_from_cbr(self):
         return comment(self.book.file)
-    
+
     def get_string_from_native(self):
         cbi_container = {'appID': 'ComicTagger/',
                          'lastModified': str(datetime.now()),

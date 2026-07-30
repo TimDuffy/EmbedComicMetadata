@@ -47,7 +47,7 @@ class ComicinfoXMLMetadata(ComicMetadata):
             zf.close()
             self._zipinfo_read = True
         return self._zipinfo
-    
+
     @zipinfo.setter
     def zipinfo(self, val):
         self._zipinfo = val
@@ -109,7 +109,7 @@ class ComicinfoXMLMetadata(ComicMetadata):
         self.teams = tuple_to_string(self.teams)
         self.locations = tuple_to_string(self.locations)
         self.genre = tuple_to_string(self.genre)
-        self.tags = tuple_to_string(self.tags)
+        self.tags = tuple_to_string(clean_tags(self.tags))
 
         assign('Publisher', self.publisher)
         assign('Imprint', self.imprint)
@@ -226,12 +226,18 @@ class ComicinfoXMLMetadata(ComicMetadata):
             return
         self.native = ET.ElementTree(ET.fromstring(metadata_string))
 
-    def write_to_source(self):
+    def get_metadata_string(self):
         header = '<?xml version="1.0"?>\n'
         metadata_string = header + ET.tostring(self.native.getroot(), "unicode") if python3 else header + ET.tostring(self.native.getroot())
 
         if not python3:
             metadata_string = metadata_string.decode('utf-8', 'ignore')
+
+        return metadata_string
+
+    def write_to_source(self):
+        metadata_string = self.get_metadata_string()
+
         # use the safe_replace function from calibre to prevent coruption
         if self.zipinfo is not None:
             with open(self.book.file, 'r+b') as zf:
@@ -257,7 +263,7 @@ class ComicinfoXMLMetadata(ComicMetadata):
                 if name.lower() == "comicinfo.xml":
                     self.zipinfo = name
                     return zf.read(name)
-    
+
     def read_from_cbr(self):
         with open(self.book.file, 'rb') as stream:
             # get the cix metadata
@@ -276,3 +282,19 @@ def tuple_to_string(metadata):
             string += item
         return string
     return metadata
+
+
+def clean_tags(tag_list):
+    # Remove Goodreads tags
+    gr_tags = [
+        'gr-read',
+        'gr-want-to-read',
+        'gr-reading',
+        'gr-dnf'
+    ]
+
+    for t in gr_tags:
+        if t in tag_list:
+            tag_list.remove(t)
+
+    return tag_list

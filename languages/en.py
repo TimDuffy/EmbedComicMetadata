@@ -41,10 +41,14 @@ en = {
     'If checked, overwrites the tags in calibre.': 'If checked, overwrites the tags in calibre.',
     'Auto count pages if importing': 'Auto count pages if importing',
     'Get the image size if importing': 'Get the image size if importing',
+    'Clean up directory struture inside CBZ files': 'Clean up directory struture inside CBZ files',
+    'Mark CBZ files with improper file struture': 'Mark CBZ files with improper file struture',
     # main_buton (ini.py)
     'Main Button Action (needs a calibre restart):': 'Main Button Action (needs a calibre restart):',
     'Embed metadata': 'Embed metadata',
     'Import metadata': 'Import metadata',
+    'Mark dirty comics': 'Mark dirty comics',
+    'Clean dirty comics': 'Clean dirty comics',
     # toolbar_buttons (ini.py)
     'Menu Buttons:': 'Menu Buttons:',
     'Show embed both button': 'Show embed both button',
@@ -56,6 +60,8 @@ en = {
     'Show convert button': 'Show convert button',
     'Show embed cover button (experimental)': 'Show embed cover button (experimental)',
     'Show count pages button': 'Show count pages button',
+    'Show mark CBZ button': 'Show mark CBZ button',
+    'Show clean CBZ button': 'Show clean CBZ button',
     'Show get image size button': 'Show get image size button',
     'Show remove metadata button': 'Show remove metadata button',
 
@@ -77,6 +83,10 @@ en = {
     'Imports the metadata from the comic to calibre': 'Imports the metadata from the comic to calibre',
     'Embed Comic Metadata': 'Embed Comic Metadata',
     'Embeds calibres metadata into the comic': 'Embeds calibres metadata into the comic',
+    'Mark Dirty Comics': 'Mark Dirty Comics',
+    'Marks comics with dirty file structure': 'Marks comics with dirty file structure',
+    'Clean Dirty Comics': 'Clean Dirty Comics',
+    'Cleans comics with dirty file structure': 'Cleans comics with dirty file structure',
     # config button (ui.py)
     'Configure': 'Configure',
 
@@ -96,6 +106,12 @@ en = {
     'Counted pages': 'Counted pages',
     'Counted pages in {} comics': 'Counted pages in {} comics',
     'The following comics were not counted: {}': 'The following comics were not counted: {}',
+    'Marked comics': 'Marked comics',
+    'Marked the following comics: {}': 'Marked the following comics: {}',
+    '{} comics were not marked': '{} comics were not marked',
+    'Cleaned comics': 'Cleaned comics',
+    'Cleaned the following comics: {}': 'Cleaned the following comics: {}',
+    '{} comics were not cleaned': '{} comics were not cleaned',
     'The following comics were converted to cbz: {}': 'The following comics were converted to cbz: {}',
     'Removed metadata': 'Removed metadata',
     'Removed metadata in {} comics': 'Removed metadata in {} comics',
