@@ -23,7 +23,7 @@ class CalibreMetadata(ComicMetadata):
         self.addCredits("Writer", mi.authors)
         self._update_field("series", mi.series)
         self._update_field("issue", mi.series_index)
-        self._update_field("tags", mi.tags)
+        self._update_field("tags", self.clean_tags(mi.tags))
         self._update_field("publisher", mi.publisher)
         self._update_field("criticalRating", mi.rating)
         # need to check for None
@@ -68,7 +68,7 @@ class CalibreMetadata(ComicMetadata):
         self._update_field("maturityRating", field(prefs['maturity_column']))
 
         self.isEmpty = False
-    
+
     def convert_to_native(self):
         # start with a fresh calibre metadata
         self.native = MetaInformation(None, None)
@@ -86,8 +86,8 @@ class CalibreMetadata(ComicMetadata):
             self.native.title = ""
 
         # tags
-        if self.tags != [] and prefs['import_tags']:
-            self.native.tags = self.tags
+        if self.tags and prefs['import_tags']:
+            self.native.tags = list(self.tags)
 
         # simple metadata
         update_field("authors", self.get_role("Writer"))
@@ -126,7 +126,7 @@ class CalibreMetadata(ComicMetadata):
         # gtin
         if self.gtin:
             self.native.set_identifiers({"gtin": self.gtin})
-			
+
         # artists
         self.update_column(prefs['penciller_column'], self.get_role("Penciller"))
         self.update_column(prefs['inker_column'], self.get_role("Inker"))
@@ -160,10 +160,12 @@ class CalibreMetadata(ComicMetadata):
         raise NotImplementedError("Calibre metadata can not be removed")
 
     def overlayTags(self, new_tags):
-        if self.tags != [] and not prefs['overwrite_calibre_tags']:
-            new_tags = list(set(self.tags + new_tags))
-        if len(new_tags) > 0:
-            setattr(self, "tags",  new_tags)
+        new_tags = self.clean_tags(new_tags)
+        if self.tags and not prefs['overwrite_calibre_tags']:
+            # clean_tags sorts and deduplicates, so a plain merge is enough
+            new_tags = self.clean_tags(list(self.tags) + new_tags)
+        if new_tags:
+            self.tags = new_tags
 
     def update_column(self, col_name, value):
         '''
@@ -174,7 +176,7 @@ class CalibreMetadata(ComicMetadata):
             col = custom_cols[col_name]
             col['#value#'] = value
             self.native.set_user_metadata(col_name, col)
-    
+
     def addCredits(self, role, persons):
         '''
         Sets all persons with the given role to credits
@@ -192,7 +194,7 @@ class CalibreMetadata(ComicMetadata):
                     if credit['role'] == role]
         return [credit['person'] for credit in self.credits
                 if credit['role'] == role]
-                
+
     def _update_field(self, field, source):
         '''
         Sets the attribute field of target to the value of source

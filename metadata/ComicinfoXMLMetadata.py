@@ -109,13 +109,13 @@ class ComicinfoXMLMetadata(ComicMetadata):
         self.teams = tuple_to_string(self.teams)
         self.locations = tuple_to_string(self.locations)
         self.genre = tuple_to_string(self.genre)
-        self.tags = tuple_to_string(clean_tags(self.tags))
+        self.tags = self.clean_tags(self.tags)
 
         assign('Publisher', self.publisher)
         assign('Imprint', self.imprint)
         assign('Genre', self.genre)
         if self.tags:
-            assign('Tags', self.tags)
+            assign('Tags', listToString(self.tags))
         assign('Web', self.webLink)
         assign('PageCount', self.pageCount)
         assign('LanguageISO', self.language)
@@ -206,9 +206,7 @@ class ComicinfoXMLMetadata(ComicMetadata):
                         self.addCredit(name.strip(), n.tag)
 
         # Tags
-        tags = xlate('Tags')
-        if tags is not None:
-            self.tags = [t for t in tags.split(", ")]
+        self.tags = self.clean_tags(xlate('Tags'))
 
         # parse page data now
         pages_node = root.find("Pages")
@@ -282,19 +280,3 @@ def tuple_to_string(metadata):
             string += item
         return string
     return metadata
-
-
-def clean_tags(tag_list):
-    # Remove Goodreads tags
-    gr_tags = [
-        'gr-read',
-        'gr-want-to-read',
-        'gr-reading',
-        'gr-dnf'
-    ]
-
-    for t in gr_tags:
-        if t in tag_list:
-            tag_list.remove(t)
-
-    return tag_list

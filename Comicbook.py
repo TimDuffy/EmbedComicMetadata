@@ -74,7 +74,7 @@ class Comicbook:
         if not self._file and self.is_zippy:
             self._file = self.db.format(self.book_id, self.format, as_path=True)
         return self._file
-    
+
     def cleanup(self):
         if self.file_dirty:
             self.db.add_format(self.book_id, self.format, self._file)
@@ -94,7 +94,7 @@ class Comicbook:
                 self.db.remove_formats({self.book_id: {"zip"}})
             return True
         return False
-    
+
     def add_dir_to_zip(self, zf, tdir, arcname):
         import os
         for dirpath, dirs, files in os.walk(tdir):
@@ -123,7 +123,8 @@ class Comicbook:
                 # add the cbz format to calibres library
                 self.db.add_format(self.book_id, "cbz", tf)
                 self.format = "cbz"
-                
+                self.is_zippy = True
+
             if prefs['clean_cbz']:
                 self.clean_cbz()
 
@@ -134,24 +135,19 @@ class Comicbook:
         self.db.add_format(self.book_id, "cbz", new_fname)
         delete_temp_file(new_fname)
         self.format = "cbz"
-        
+        self.is_zippy = True
+
         if prefs['clean_cbz']:
             self.clean_cbz()
-            
+
     # CBZ mark
     def stringFromMetadata(self, metadata):
         cbi_container = self.createJSONDictionary(metadata)
         return json.dumps(cbi_container)
-    
-    
-    def is_cbi_valid(self):
-        # Ensure metadata is set
-        self.overlay_metadata()
 
+    def is_cbi_valid(self):
         # Generate what the string should be
         cbi_string = self.cbi_metadata.get_string_from_native()
-        if not python3:
-            cbi_string = cbi_string.decode('utf-8', 'ignore')
 
         # ensure we have a temp file
         self.make_temp_cbz_file()
@@ -175,12 +171,6 @@ class Comicbook:
         return curr_str == None or curr_str == "".encode("utf-8")
 
     def is_cix_valid(self):
-        # Ensure metadata is set
-        self.overlay_metadata()
-
-        # Generate what the string should be
-        cix_string = self.cix_metadata.get_metadata_string()
-
         # ensure we have a temp file
         self.make_temp_cbz_file()
 
@@ -197,8 +187,12 @@ class Comicbook:
                 pages += 1
         zf.close()
 
-        if self.comic_metadata.pageCount != pages:
-            return False
+        cix_metadata = ComicinfoXMLMetadata(self)
+        cix_metadata.read()
+        cix_metadata.overlay(self.calibre_metadata)
+        cix_metadata.pageCount = pages
+        cix_metadata.convert_to_native()
+        cix_string = cix_metadata.get_metadata_string()
 
         return cix_string == curr_str
 
@@ -250,7 +244,7 @@ class Comicbook:
             if os.path.basename(f).__contains__('zz'):
                 return True
             # Case 2c+d
-            if os.path.basename(f) in ['cover.jpeg', 'cover.jpeg', 'page.jpg', 'zSoU-Nerd.jpg']:
+            if os.path.basename(f) in ['cover.jpeg', 'cover.jpeg', 'page.jpg', 'zSoU-Nerd.jpg', 'zDCP.jpg']:
                 return True
 
         return False
@@ -261,6 +255,10 @@ class Comicbook:
             self.ia.gui.current_db.data.add_marked_ids({self.book_id: 'shit_files_m8'})
 
         return should_mark
+
+    def make_temp_cbz_file(self):
+        if not self._file and self.format == "cbz":
+            self._file = self.db.format(self.book_id, "cbz", as_path=True)
 
     # CBZ cleanup
     def clean_cbz(self):
@@ -293,6 +291,7 @@ class Comicbook:
                 with TemporaryFile("comic.cbz") as tf:
                     zf = ZipFile(tf, "w")
 
+                    pages = 0
                     for f in all_files:
                         # Skip non-image files
                         if pathlib.Path(f).suffix in [".xhtml", ".html", ".css", ".xml", ".sfv"]:
@@ -305,23 +304,31 @@ class Comicbook:
                             continue
                         else:
                             zf.write(f, f'{clean_title(self.calibre_metadata.title)}/{os.path.basename(f)}')
+                            if f.lower().rpartition('.')[-1] in IMG_EXTENSIONS:
+                                pages += 1
 
                     if comments:
                         zf.comment = "".encode("utf-8")
 
-                    self.overlay_metadata()
                     if prefs['cix_embed']:
+                        self.calibre_metadata.pageCount = pages
+                        self.calibre_metadata.write()
+
+                        self.cix_metadata.read()
+                        self.cix_metadata.overlay(self.calibre_metadata)
+                        self.cix_metadata.convert_to_native()
                         cix_string = self.cix_metadata.get_metadata_string()
                         zf.writestr("ComicInfo.xml", cix_string)
 
                     zf.close()
 
-                    # add the cbz format to calibres library
+                    # add the cbz format to calibre library
                     self.db.add_format(self.book_id, "cbz", tf)
                     self.format = "cbz"
+                    self.is_zippy = True
 
                     delete_temp_file(tf)
-            self.file = self.db.format(self.book_id, "cbz", as_path=True)
+            self._file = self.db.format(self.book_id, "cbz", as_path=True)
 
             return True
 

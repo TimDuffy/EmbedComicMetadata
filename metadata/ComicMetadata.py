@@ -47,6 +47,14 @@ class PageType:
 
 class ComicMetadata(ABC):
 
+    # tags which are never written to comic metadata (goodreads sync shelves)
+    ignored_tags = frozenset((
+        'gr-read',
+        'gr-reading',
+        'gr-want-to-read',
+        'gr-dnf',
+    ))
+
     credit_synonyms = {
         "Writer": ['writer', 'plotter', 'scripter'],
         "Penciller": ['artist', 'penciller', 'penciler', 'breakdowns'],
@@ -242,8 +250,9 @@ class ComicMetadata(ABC):
                 self.addCredit(c['person'], c['role'], primary)
 
     def overlayTags(self, new_tags):
-        if len(new_tags) > 0:
-            setattr(self, "tags",  new_tags)
+        new_tags = self.clean_tags(new_tags)
+        if new_tags:
+            self.tags = new_tags
 
     def setDefaultPageList(self, count):
         # generate a default page list, with the first page marked as the cover
@@ -374,6 +383,24 @@ class ComicMetadata(ABC):
             outstr += fmt_str.format(i[0] + ":", i[1])
 
         return outstr
+
+    @classmethod
+    def clean_tags(cls, tags):
+        '''
+        Normalizes tags into a canonical list: unique, stripped, sorted and
+        without the tags we never want in comic metadata.
+
+        Takes anything the metadata sources hand us: None, a list, a tuple
+        (calibre custom columns) or a string of comma separated tags. The
+        canonical form is what makes generated metadata comparable to the
+        metadata already in a file, which the mark and clean actions rely on.
+        '''
+        if not tags:
+            return []
+        if isinstance(tags, str):
+            tags = tags.split(",")
+        tags = {t.strip() for t in tags if t and t.strip()}
+        return sorted(t for t in tags if t.lower() not in cls.ignored_tags)
 
 def strip_accents(input):
     return ''.join(c for c in unicodedata.normalize('NFD', input) if unicodedata.category(c) != 'Mn')

@@ -56,13 +56,11 @@ class ComicbookinfoMetadata(ComicMetadata):
         self.language = xlate('language')
         self.country = xlate('country')
         self.criticalRating = xlate('rating')
-        self.tags = xlate('tags')
+        self.tags = self.clean_tags(xlate('tags'))
 
-        # make sure credits and tags are at least empty lists and not None
+        # make sure credits is at least an empty list and not None
         if self.credits is None:
             self.credits = []
-        if self.tags is None:
-            self.tags = []
 
         # need to massage the language string to be ISO
         # modified to use a calibre function

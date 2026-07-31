@@ -97,10 +97,10 @@ def count_pages(ia):
 
 
 def mark_cbz(ia):
-    def _mark_cbz(metadata):
-        if metadata.format not in ["cbr", "zip", "cbz"]:
+    def _mark_cbz(book):
+        if book.format not in ["cbr", "zip", "cbz"]:
             return False
-        return metadata.action_mark_cbz()
+        return book.action_mark_cbz()
 
     iterate_over_books(ia, _mark_cbz,
                        _L["Marked comics"],
@@ -110,11 +110,10 @@ def mark_cbz(ia):
 
 
 def clean_cbz(ia):
-    def _clean_cbz(metadata):
-        if metadata.format != "cbz":
+    def _clean_cbz(book):
+        if book.format != "cbz":
             return False
-        metadata.action_count_pages()
-        return metadata.clean_cbz()
+        return book.clean_cbz()
 
     iterate_over_books(ia, _clean_cbz,
                        _L["Cleaned comics"],
