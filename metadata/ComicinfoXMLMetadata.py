@@ -224,6 +224,14 @@ class ComicinfoXMLMetadata(ComicMetadata):
             return
         self.native = ET.ElementTree(ET.fromstring(metadata_string))
 
+    def write(self):
+        # The page count has to describe the archive we write into, otherwise
+        # the metadata we embed here differs from the metadata the cleanup
+        # writes and the comic stays marked as dirty forever.
+        if self.book.is_zippy:
+            self.pageCount = self.book.count_pages()
+        ComicMetadata.write(self)
+
     def get_metadata_string(self):
         header = '<?xml version="1.0"?>\n'
         metadata_string = header + ET.tostring(self.native.getroot(), "unicode") if python3 else header + ET.tostring(self.native.getroot())

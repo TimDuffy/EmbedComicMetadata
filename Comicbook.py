@@ -5,8 +5,6 @@ __license__   = 'GPL v3'
 __copyright__ = '2015, dloraine'
 __docformat__ = 'restructuredtext en'
 
-import io
-import json
 import os
 import pathlib
 import re
@@ -29,6 +27,15 @@ python3 = sys.version_info[0] > 2
 # image file extensions
 IMG_EXTENSIONS = ["jpg", "png", "jpeg", "gif", "bmp", "tiff", "tif", "webp",
                   "svg", "bpg", "psd"]
+
+# the comic rack metadata always lives in the root of the archive
+CIX_NAME = "ComicInfo.xml"
+
+# files which are not wanted inside a comic archive
+JUNK_EXTENSIONS = [".xhtml", ".html", ".css", ".xml", ".sfv"]
+JUNK_FILENAMES = ["cover.jpg", "cover.jpeg", "page.jpg", "zsou-nerd.jpg",
+                  "zdcp.jpg"]
+SCANNER_TAG = "zz"
 
 
 class Comicbook:
@@ -141,23 +148,36 @@ class Comicbook:
             self.clean_cbz()
 
     # CBZ mark
-    def stringFromMetadata(self, metadata):
-        cbi_container = self.createJSONDictionary(metadata)
-        return json.dumps(cbi_container)
+    def build_cbi_string(self):
+        '''
+        Builds the ComicBookInfo comment which belongs in this comic: what the
+        comment already contains, overlaid with the metadata from calibre.
+
+        Cleaning and the dirty check both go through this, so that they can
+        not disagree about what the comment should look like.
+        '''
+        cbi_metadata = ComicbookinfoMetadata(self)
+        cbi_metadata.read()
+        cbi_metadata.overlay(self.calibre_metadata)
+        cbi_metadata.convert_to_native()
+
+        return cbi_metadata.get_string_from_native()
 
     def is_cbi_valid(self):
-        # Generate what the string should be
-        cbi_string = self.cbi_metadata.get_string_from_native()
+        '''
+        Determines if the zip comment already holds the metadata we would
+        write into it.
 
-        # ensure we have a temp file
-        self.make_temp_cbz_file()
+        Compares the metadata itself and not the comment string, because the
+        string carries a lastModified timestamp which changes on every write.
+        '''
+        cbi_metadata = ComicbookinfoMetadata(self)
+        cbi_metadata.read()
+        curr_metadata = cbi_metadata.native
+        cbi_metadata.overlay(self.calibre_metadata)
+        cbi_metadata.convert_to_native()
 
-        # Read current cbi comment
-        zf = ZipFile(self.file, "r")
-        curr_str = zf.comment
-        zf.close()
-
-        return cbi_string == curr_str
+        return cbi_metadata.native == curr_metadata
 
     def is_cbi_empty(self):
        # ensure we have a temp file
@@ -170,81 +190,88 @@ class Comicbook:
 
         return curr_str == None or curr_str == "".encode("utf-8")
 
+    def build_cix_string(self, pages=None):
+        '''
+        Builds the ComicInfo.xml which belongs in this comic: what the file
+        already contains, overlaid with the metadata from calibre.
+
+        Cleaning and the dirty check both go through this, so that they can
+        not disagree about what the metadata should look like.
+
+        :param pages: the page count to use, for when the archive we are
+                      building does not exist yet. Defaults to the pages in
+                      the current archive.
+        '''
+        cix_metadata = ComicinfoXMLMetadata(self)
+        cix_metadata.read()
+        cix_metadata.overlay(self.calibre_metadata)
+        cix_metadata.pageCount = self.count_pages() if pages is None else pages
+        cix_metadata.convert_to_native()
+
+        return cix_metadata.get_metadata_string()
+
     def is_cix_valid(self):
         # ensure we have a temp file
         self.make_temp_cbz_file()
 
         # Read current xml file
         zf = ZipFile(self.file, "r")
-        curr_file = zf.open('ComicInfo.xml', 'r')
-        curr_str = io.TextIOWrapper(curr_file).read()
-        curr_file.close()
-
-        # count current # of pages
-        pages = 0
-        for name in zf.namelist():
-            if name.lower().rpartition('.')[-1] in IMG_EXTENSIONS:
-                pages += 1
+        curr_str = zf.read(CIX_NAME).decode("utf-8")
         zf.close()
 
-        cix_metadata = ComicinfoXMLMetadata(self)
-        cix_metadata.read()
-        cix_metadata.overlay(self.calibre_metadata)
-        cix_metadata.pageCount = pages
-        cix_metadata.convert_to_native()
-        cix_string = cix_metadata.get_metadata_string()
-
-        return cix_string == curr_str
+        return self.build_cix_string() == curr_str
 
     def is_cbz_dirty(self):
         '''
         Determines if a CBZ file has a dirty/unwanted file structure
-        '''
-        ffile = self.db.format(self.book_id, self.format, as_path=True)
-        tmpf = ZipFile(ffile)
-        filename_list = tmpf.namelist()
 
-        # A 'dirty' zip has one (or more) of these cases:
-        #   Case 1: Metadata is not clean
-        #       a. There are duplicate files
-        #       b. ComicInfo.xml does not exist at <root_dir>/ComicInfo.xml
-        #       c. ComicInfo.xml content is not up to date
-        #       d. ComicBookInfo comment is not up to date
-        #   Case 2: Directory structure is up to date
-        #       a. file name matches <root_dir>/<book_name>/*
-        #       b. filename does not contain invalid extension
-        #       c. filename does not match scanner tag
-        #       d. filename does not match embedded cover
+        A 'dirty' zip has one (or more) of these cases:
+          Case 1: Metadata is not clean
+              a. There are duplicate files
+              b. ComicInfo.xml does not exist at <root_dir>/ComicInfo.xml
+              c. ComicInfo.xml content is not up to date
+              d. the ComicBookInfo comment is not up to date
+
+                 Cases b to d follow the embed options: metadata we do not
+                 embed should not be in the file at all, otherwise cleaning a
+                 comic could never make it clean.
+          Case 2: Directory structure is not clean
+              a. a file does not match <root_dir>/<book_name>/<file>
+              b. a file is not wanted in a comic archive, see is_junk_file
+        '''
+        zf = ZipFile(self.file)
+        filename_list = zf.namelist()
+        zf.close()
 
         # Case 1a
         if len(set(filename_list)) < len(filename_list):
             return True
-        # Case 1b
-        if 'ComicInfo.xml' not in filename_list:
-            return True
-        else:
-            # Case 1c
+        # Case 1b + 1c
+        if prefs['cix_embed']:
+            if CIX_NAME not in filename_list:
+                return True
             if not self.is_cix_valid():
                 return True
+        elif CIX_NAME in filename_list:
+            # we do not embed it, so a cleaned comic does not contain it
+            return True
         # Case 1d
-        if not self.is_cbi_empty():
+        if prefs['cbi_embed']:
+            if not self.is_cbi_valid():
+                return True
+        elif not self.is_cbi_empty():
             return True
 
+        comic_dir = clean_title(self.calibre_metadata.title)
         for f in filename_list:
-            # We already checked ComicInfo.xml, so ignore it here
-            if f == 'ComicInfo.xml':
+            # the metadata lives in the root, we already checked it above
+            if f == CIX_NAME:
                 continue
             # Case 2a
-            if os.path.dirname(f) != clean_title(self.calibre_metadata.title):
+            if os.path.dirname(f) != comic_dir:
                 return True
             # Case 2b
-            if pathlib.Path(f).suffix in [".xhtml", ".html", ".css", ".xml", ".sfv"]:
-                return True
-            # Case 2c+d
-            if os.path.basename(f).__contains__('zz'):
-                return True
-            # Case 2c+d
-            if os.path.basename(f) in ['cover.jpeg', 'cover.jpeg', 'page.jpg', 'zSoU-Nerd.jpg', 'zDCP.jpg']:
+            if is_junk_file(f):
                 return True
 
         return False
@@ -291,34 +318,31 @@ class Comicbook:
                 with TemporaryFile("comic.cbz") as tf:
                     zf = ZipFile(tf, "w")
 
+                    comic_dir = clean_title(self.calibre_metadata.title)
                     pages = 0
                     for f in all_files:
-                        # Skip non-image files
-                        if pathlib.Path(f).suffix in [".xhtml", ".html", ".css", ".xml", ".sfv"]:
+                        # drop unwanted files, the metadata is rewritten below
+                        if is_junk_file(f):
                             continue
-                        # Remove scanner tags
-                        if os.path.basename(f).__contains__('zz'):
-                            continue
-                        # Remove embedded covers and scanner tags
-                        if os.path.basename(f) in ['cover.jpg', 'cover.jpeg', 'page.jpg', 'zSoU-Nerd.jpg']:
-                            continue
-                        else:
-                            zf.write(f, f'{clean_title(self.calibre_metadata.title)}/{os.path.basename(f)}')
-                            if f.lower().rpartition('.')[-1] in IMG_EXTENSIONS:
-                                pages += 1
+                        zf.write(f, f'{comic_dir}/{os.path.basename(f)}')
+                        if f.lower().rpartition('.')[-1] in IMG_EXTENSIONS:
+                            pages += 1
 
-                    if comments:
-                        zf.comment = "".encode("utf-8")
-
-                    if prefs['cix_embed']:
+                    if prefs['cix_embed'] or prefs['cbi_embed']:
+                        # remember the page count of the archive we are
+                        # building, so that the metadata we embed below and
+                        # the metadata in calibre stay in sync with it
                         self.calibre_metadata.pageCount = pages
                         self.calibre_metadata.write()
 
-                        self.cix_metadata.read()
-                        self.cix_metadata.overlay(self.calibre_metadata)
-                        self.cix_metadata.convert_to_native()
-                        cix_string = self.cix_metadata.get_metadata_string()
-                        zf.writestr("ComicInfo.xml", cix_string)
+                    if prefs['cbi_embed']:
+                        zf.comment = self.build_cbi_string()
+                    elif comments:
+                        # drop metadata we are not supposed to embed
+                        zf.comment = "".encode("utf-8")
+
+                    if prefs['cix_embed']:
+                        zf.writestr(CIX_NAME, self.build_cix_string(pages))
 
                     zf.close()
 
@@ -389,6 +413,25 @@ class Comicbook:
         zf.close()
         size = round(size_x * size_y / 1000000, 2)
         return size
+
+
+def is_junk_file(name):
+    '''
+    Determines if a file does not belong in a cleaned comic archive.
+
+    Both the dirty check and the cleanup use this, otherwise the cleanup can
+    leave behind a file which keeps the comic marked as dirty forever.
+    '''
+    basename = os.path.basename(name)
+
+    # metadata, playlists and the like, ComicInfo.xml gets written seperately
+    if pathlib.Path(basename).suffix.lower() in JUNK_EXTENSIONS:
+        return True
+    # scanner tags
+    if SCANNER_TAG in basename:
+        return True
+    # embedded covers and scanner credits
+    return basename.lower() in JUNK_FILENAMES
 
 
 def delete_temp_file(ffile):
